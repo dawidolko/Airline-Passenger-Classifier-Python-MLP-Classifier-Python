@@ -1,0 +1,2 @@
+model,accuracy_test,balanced_accuracy_test,f1_macro_test,n_train,n_test
+mlp_128_64_32,0.6292307692307693,0.3525183428724067,0.3591727148495033,5197,1300
