@@ -1,5 +1,0 @@
-Odtwarzalnosc: ten plik zapisuje wersje bibliotek przy generowaniu wynikow.
-scikit-learn 1.8.0
-numpy 2.4.6
-pandas 2.3.3
-xgboost: niedostepny (pominieto 3 warianty; porownanie MLP + Random Forest)

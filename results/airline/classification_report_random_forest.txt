@@ -1,0 +1,9 @@
+              precision    recall  f1-score   support
+
+    Business       0.94      0.91      0.93      9325
+         Eco       0.80      0.95      0.87      8747
+    Eco Plus       0.30      0.01      0.02      1411
+
+    accuracy                           0.86     19483
+   macro avg       0.68      0.62      0.61     19483
+weighted avg       0.83      0.86      0.84     19483

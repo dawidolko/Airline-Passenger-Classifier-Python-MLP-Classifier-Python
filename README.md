@@ -1,79 +1,171 @@
-# Klasyfikacja jakości wina — MLP vs Random Forest / XGBoost
+# Airline Passenger Satisfaction — MLP (PyTorch)
 
-## Krótki opis
+Projekt klasyfikacji wieloklasowej `Class` (Business / Eco / Eco Plus) na zbiorze
+**Airline Passenger Satisfaction** z Kaggle. Model główny: sieć neuronowa MLP
+zaimplementowana od zera w PyTorch. Model referencyjny: Random Forest (sklearn).
 
-- **Zbiór:** [Wine Quality](https://www.kaggle.com/datasets/yasserh/wine-quality-dataset) (`data/WineQT.csv`) — **~6497** próbek, **11** cech chemicznych, **wieloklasowa** etykieta `quality` (oceny **3–9**).
-- **Model główny:** sieć **MLP** (3 warianty architektury).
-- **Modele porównawcze:** **Random Forest** × 3 oraz **XGBoost** × 3 (gdy biblioteka jest dostępna).
-- **Walidacja:** stratyfikowana **5-fold** CV; **held-out test 20%** dla najlepszego MLP.
-- **Metryki:** `accuracy`, `balanced_accuracy`, `f1_macro`.
-- **Stack:** scikit-learn, pandas, Plotly, Streamlit, Jupyter.
-
-## Czym jest zbiór?
-
-Dane z badań chemicznych **wina czerwonego i białego** (UCI Wine Quality). Każdy wiersz to próbka opisana parametrami takimi jak kwasowość, zawartość alkoholu, siarczany czy gęstość. Zmienna **`quality`** to sensoryczna ocena jakości (skala dyskretna) — **nie jest to klasyfikacja binarna**.
+---
 
 ## Wymagania
 
 - Python 3.10+
-- `pip install -r requirements.txt`
-- **macOS (opcjonalnie):** `brew install libomp` — aby włączyć XGBoost w porównaniu.
+- Pakiety: `requirements.txt`
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Szybkie uruchomienie
+
+```bash
+# sam eksperyment (trening + ewaluacja + wykresy):
+python3 run_experiment.py
+
+# dashboard Streamlit:
+streamlit run streamlit_app.py
+```
+
+Skrypty jednolinijkowe:
+- macOS/Linux: `./start.sh`
+- Windows: `start.bat`
+
+---
 
 ## Dane
 
-Plik `data/WineQT.csv` jest w repozytorium. Odtworzenie z UCI:
+| Element | Wartość |
+|---------|--------|
+| Źródło | [Kaggle — Airline Passenger Satisfaction](https://www.kaggle.com/datasets/teejmahal20/airline-passenger-satisfaction) |
+| Pliki lokalne | `data/train.csv`, `data/test.csv` |
+| Rekordy | ~129 880 (train + test Kaggle) |
+| Target | `Class` (Business ~48%, Eco ~45%, **Eco Plus ~7%**) |
 
-```bash
-python scripts/pobierz_dane.py
+### Usuwane kolumny
+- `Unnamed: 0` — sztuczny indeks CSV
+- `id` — identyfikator pasażera
+- `satisfaction` — oryginalny binarny target (nie używamy go)
+
+### Cechy (18 numerycznych + 3 kategoryczne)
+- **Numeryczne:** Age, Flight Distance, 14 ocen usług (skala 0–5), Departure Delay, Arrival Delay
+- **Kategoryczne:** Gender, Customer Type, Type of Travel
+
+---
+
+## Preprocessing (`airline_project/preprocessing.py`)
+
+1. **Usuwanie wartości nierealnych** (`remove_unrealistic_values`):
+   - Age < 0 lub > 100 → NaN
+   - Flight Distance ≤ 0 → NaN
+   - Opóźnienia < 0 lub > 1440 min → NaN
+   - Oceny usług < 0 lub > 5 → NaN
+2. **Imputacja braków:**
+   - Mediana (numeryczne), moda (kategoryczne)
+   - Fit **wyłącznie na train** — bez data leakage
+3. **OneHotEncoder** — kategoryczne → kolumny binarne
+4. **StandardScaler** — numeryczne → z-score (fit na train)
+5. **Podział:** 70% train / 15% val / 15% test, stratified po target
+
+---
+
+## Model MLP (`airline_project/model.py`)
+
+### Architektura warstwy ukrytej
+
+```
+Linear → BatchNorm1d → ReLU → Dropout
 ```
 
-## Eksperyment
+- **Linear** — transformacja liniowa (uczone wagi + bias)
+- **BatchNorm1d** — normalizacja w batchu (stabilizacja treningu)
+- **ReLU** — aktywacja nieliniowa max(0, x)
+- **Dropout** — regularyzacja (losowe zerowanie neuronów)
 
-```bash
-python run_experiment.py
-```
+### Elementy uczenia
 
-Zapisuje: `results/wyniki_*.csv`, `.tex`, `wykresy/*.html`, `macierz_pomylek_test.csv`, `wyniki_test_mlp.csv`.
-
-## Streamlit i start
-
-```bash
-chmod +x start.sh   # jednorazowo
-./start.sh          # macOS/Linux
-start.bat           # Windows
-```
-
-Jeśli pojawi się `No module named pip`, skrypt **usuwa i tworzy na nowo** `.venv`. Możesz też ręcznie:
-
-```bash
-rm -rf .venv && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-```
-
-→ `http://localhost:8501` — formuły, EDA, wyniki, druk (`Ctrl+P` / `Cmd+P`).
-
-## Notebooki i dokumentacja
-
-| Plik | Opis |
-|------|------|
-| `wine_quality_mlp_sklearn_project2.ipynb` | Raport: EDA, sklearn MLP, wnioski |
-| `docs/wine_quality_mlp_pytorch_project2.ipynb` | Wariant MLP w PyTorch |
-| `docs/dokumentacja_do125148.docx` | Sprawozdanie Word (aktualizacja treści i wykresów: `python docs/aktualizuj_dokumentacja.py`) |
-
-## Brak przecieku
-
-`StandardScaler` w `Pipeline` — dopasowanie **tylko na treningu** każdej foldy CV.
-
-## Struktura
-
-| Ścieżka | Opis |
+| Element | Opis |
 |---------|------|
-| `data/WineQT.csv` | Zbiór źródłowy |
-| `src/config.py` | Kolumny, ścieżki, seed |
-| `src/experiment.py` | Pipeline, modele, CV, eksport |
-| `src/wykresy.py` | Wykresy Plotly |
-| `streamlit_app.py` | Aplikacja WWW |
-| `results/` | Wyniki generowane |
+| Optimizer | AdamW (weight_decay=1e-4) |
+| Loss | CrossEntropyLoss z **class weights** |
+| Scheduler | ReduceLROnPlateau (factor=0.5, patience=3) |
+| Early stopping | Walidacyjne macro F1 (patience=5, min_delta=1e-4) |
+| Batch size | 1024 |
+| GPU | Automatyczna detekcja CUDA / MPS / CPU |
 
-## Licencja
+### Grid search (18 konfiguracji)
 
-Zobacz `LICENSE`.
+| Parametr | Wartości |
+|----------|----------|
+| Architektura | (128,64), (256,128,64), (512,256,128) |
+| Dropout | 0.1, 0.2, 0.3 |
+| Learning rate | 1e-3, 5e-4 |
+
+Baseline: (128,64), dropout=0.2, lr=1e-3. Tuned: najlepsza z siatki.
+
+---
+
+## Wyniki na zbiorze testowym (19 483 próbki)
+
+| Model | Accuracy | Precision macro | Recall macro | F1-macro |
+|-------|----------|-----------------|--------------|----------|
+| MLP baseline | 0.7731 | 0.6581 | 0.6822 | 0.6504 |
+| **MLP tuned** | 0.7825 | 0.6571 | 0.6773 | **0.6529** |
+| Random Forest | **0.8644** | 0.6791 | 0.6248 | 0.6058 |
+
+**Najlepsza konfiguracja:** MLP 512×256×128, dropout=0.3, lr=1e-3
+
+---
+
+## Wnioski
+
+1. **MLP tuned wygrywa F1-macro** — lepiej balansuje klasy dzięki class weights.
+2. **RF wygrywa accuracy**, ale niemal ignoruje Eco Plus (recall ~1%).
+3. **Eco Plus** to klasa problematyczna (~7%) — MLP osiąga recall ~41%.
+4. **Class weights w loss** są kluczowe dla wykrywania mniejszościowej klasy.
+5. **Ograniczenia:** mała klasa Eco Plus, brak feature engineering, grid search 18 konfiguracji.
+
+---
+
+## Struktura projektu
+
+```
+├── airline_project/
+│   ├── __init__.py
+│   ├── config.py          # konfiguracja (ścieżki, hiperparametry, cechy)
+│   ├── model.py           # klasa AirlineMLP + wybór urządzenia
+│   ├── preprocessing.py   # czyszczenie, podział, imputacja, skalowanie
+│   └── experiment.py      # grid search, trening, ewaluacja, wykresy
+├── data/archive (2)/
+│   ├── train.csv
+│   └── test.csv
+├── results/airline/
+│   ├── model_comparison.csv
+│   ├── grid_search_results.csv
+│   ├── classification_report_*.txt
+│   ├── run_metadata.json
+│   └── plots/
+│       ├── confusion_matrices_side_by_side.png
+│       ├── loss_and_f1_history.png
+│       └── scheduler_lr.png
+├── docs/
+│   ├── airline_passenger_satisfaction_mlp_project2.ipynb
+│   ├── dokumentacja_do125148.docx
+│   └── aktualizuj_dokumentacja.py
+├── run_experiment.py      # punkt wejścia
+├── streamlit_app.py       # dashboard Streamlit
+├── requirements.txt
+├── start.sh / start.bat
+└── README.md
+```
+
+---
+
+## Dashboard Streamlit
+
+```bash
+streamlit run streamlit_app.py
+```
+
+Widoki: Podsumowanie wyników, Raporty klasyfikacji, Wykresy, Lista plików.
+Przycisk „Uruchom pełny eksperyment" pozwala uruchomić trening z poziomu UI.
