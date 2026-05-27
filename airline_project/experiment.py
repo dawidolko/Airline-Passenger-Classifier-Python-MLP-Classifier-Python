@@ -341,15 +341,6 @@ def wypisz_wnioski(comparison: pd.DataFrame, best_grid_row: pd.Series) -> None:
         "   - RF bez class_weight='balanced' — nierówne porównanie"
     )
 
-    print(
-        "\n8) MOŻLIWE ULEPSZENIA:\n"
-        "   - RF z class_weight='balanced' dla uczciwszego porównania\n"
-        "   - Oversampling Eco Plus (SMOTE) lub focal loss\n"
-        "   - Bayesowska optymalizacja hiperparametrów (Optuna)\n"
-        "   - Feature engineering: agregaty ocen, interakcje\n"
-        "   - Ensemble: MLP + RF (voting lub stacking)"
-    )
-
     print("\n" + "=" * 80 + "\n")
 
 
