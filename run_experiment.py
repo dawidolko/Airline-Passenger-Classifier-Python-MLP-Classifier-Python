@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Punkt wejścia do eksperymentu Airline Passenger Satisfaction.
-Uruchamia pełny pipeline: preprocessing, grid search MLP, ewaluacja, wykresy.
+Entry point for the Airline Passenger Satisfaction experiment.
+Runs the full pipeline: preprocessing, MLP grid search, evaluation, charts.
 """
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ from airline_project.experiment import uruchom_pelny_eksperyment
 
 
 def main() -> None:
-    """Uruchamia pełen pipeline eksperymentu."""
-    print("Airline Passenger Satisfaction — eksperyment MLP (PyTorch)")
+    """Runs the full experiment pipeline."""
+    print("Airline Passenger Satisfaction — MLP experiment (PyTorch)")
     uruchom_pelny_eksperyment()
 
 

@@ -1,15 +1,15 @@
 # Airline Passenger Satisfaction — MLP (PyTorch)
 
-Projekt klasyfikacji wieloklasowej `Class` (Business / Eco / Eco Plus) na zbiorze
-**Airline Passenger Satisfaction** z Kaggle. Model główny: sieć neuronowa MLP
-zaimplementowana od zera w PyTorch. Model referencyjny: Random Forest (sklearn).
+A multiclass classification project for `Class` (Business / Eco / Eco Plus) on the
+**Airline Passenger Satisfaction** dataset from Kaggle. Main model: an MLP neural network
+implemented from scratch in PyTorch. Reference model: Random Forest (sklearn).
 
 ---
 
-## Wymagania
+## Requirements
 
 - Python 3.10+
-- Pakiety: `requirements.txt`
+- Packages: `requirements.txt`
 
 ```bash
 pip install -r requirements.txt
@@ -17,373 +17,373 @@ pip install -r requirements.txt
 
 ---
 
-## Szybkie uruchomienie
+## Quick start
 
 ```bash
-# sam eksperyment (trening + ewaluacja + wykresy):
+# experiment only (training + evaluation + charts):
 python3 run_experiment.py
 
-# dashboard Streamlit:
+# Streamlit dashboard:
 streamlit run streamlit_app.py
 ```
 
-Skrypty jednolinijkowe:
+One-line scripts:
 - macOS/Linux: `./start.sh`
 - Windows: `start.bat`
 
 ---
 
-## Dane
+## Data
 
-| Element | Wartość |
+| Item | Value |
 |---------|--------|
-| Źródło | [Kaggle — Airline Passenger Satisfaction](https://www.kaggle.com/datasets/teejmahal20/airline-passenger-satisfaction) |
-| Pliki lokalne | `data/train.csv`, `data/test.csv` |
-| Plik `data/train.csv` (Kaggle) | **103 904** rekordów |
-| Plik `data/test.csv` (Kaggle) | **25 976** rekordów |
-| **Razem (używane w projekcie)** | **129 880** rekordów |
-| Po podziale 70/15/15 | train **90 915** / val **19 482** / test **19 483** |
+| Source | [Kaggle — Airline Passenger Satisfaction](https://www.kaggle.com/datasets/teejmahal20/airline-passenger-satisfaction) |
+| Local files | `data/train.csv`, `data/test.csv` |
+| `data/train.csv` (Kaggle) | **103,904** records |
+| `data/test.csv` (Kaggle) | **25,976** records |
+| **Total (used in the project)** | **129,880** records |
+| After the 70/15/15 split | train **90,915** / val **19,482** / test **19,483** |
 | Target | `Class` (Business ~48%, Eco ~45%, **Eco Plus ~7%**) |
 
-> **Uwaga:** „~105 tys.” to zwykle sam plik `train.csv` (~104k), a „~130 tys.” to **train + test** połączone. To nie są sprzeczne liczby — to **różne etapy** (pliki Kaggle vs podział w eksperymencie).
+> **Note:** "~105k" usually refers to the `train.csv` file alone (~104k), while "~130k" is **train + test** combined. These are not contradictory numbers — they are **different stages** (Kaggle files vs the split in the experiment).
 
-### Usuwane kolumny
-- `Unnamed: 0` — sztuczny indeks CSV
-- `id` — identyfikator pasażera
-- `satisfaction` — oryginalny binarny target (nie używamy go)
+### Dropped columns
+- `Unnamed: 0` — an artificial CSV index
+- `id` — a passenger identifier
+- `satisfaction` — the original binary target (we do not use it)
 
-### Cechy (18 numerycznych + 3 kategoryczne)
-- **Numeryczne:** Age, Flight Distance, 14 ocen usług (skala 0–5), Departure Delay, Arrival Delay
-- **Kategoryczne:** Gender, Customer Type, Type of Travel
+### Features (18 numeric + 3 categorical)
+- **Numeric:** Age, Flight Distance, 14 service ratings (scale 0–5), Departure Delay, Arrival Delay
+- **Categorical:** Gender, Customer Type, Type of Travel
 
 ---
 
 ## Preprocessing (`airline_project/preprocessing.py`)
 
-1. **Usuwanie wartości nierealnych** (`remove_unrealistic_values`):
-   - Age < 0 lub > 100 → NaN
+1. **Removing unrealistic values** (`remove_unrealistic_values`):
+   - Age < 0 or > 100 → NaN
    - Flight Distance ≤ 0 → NaN
-   - Opóźnienia < 0 lub > 1440 min → NaN
-   - Oceny usług < 0 lub > 5 → NaN
-2. **Imputacja braków:**
-   - Mediana (numeryczne), moda (kategoryczne)
-   - Fit **wyłącznie na train** — bez data leakage
-3. **OneHotEncoder** — kategoryczne → kolumny binarne
-4. **StandardScaler** — numeryczne → z-score (fit na train)
-5. **Podział:** 70% train / 15% val / 15% test, stratified po target
+   - Delays < 0 or > 1440 min → NaN
+   - Service ratings < 0 or > 5 → NaN
+2. **Imputing missing values:**
+   - Median (numeric), mode (categorical)
+   - Fit **on train only** — no data leakage
+3. **OneHotEncoder** — categorical → binary columns
+4. **StandardScaler** — numeric → z-score (fit on train)
+5. **Split:** 70% train / 15% val / 15% test, stratified by target
 
 ---
 
-## FAQ — najważniejsze pytania (prosto)
+## FAQ — the most important questions (plainly)
 
-> **Co to za czarny pasek w podglądzie README?**  
-> W pliku masz linie z trzech myślników: `---`. W Markdown to **separator sekcji** (pozioma linia), nie wykres i nie wynik modelu. Np. między „train/val/test” a „wyciek danych”.
+> **What is that black bar in the README preview?**
+> The file has lines made of three dashes: `---`. In Markdown that is a **section separator** (a horizontal line), not a chart and not a model output. E.g. between "train/val/test" and "data leakage".
 
-### Skąd liczby 129k, ~105k i 19 483? (żeby nie było chaosu)
+### Where do the numbers 129k, ~105k and 19,483 come from? (so there is no confusion)
 
-| Co widzisz | Liczba | Co to znaczy |
+| What you see | Number | What it means |
 |------------|--------|--------------|
-| `data/train.csv` | **103 904** | Osobny plik z Kaggle (~104–105 tys.) — **nie** to samo co „train 70%” w modelu |
-| `data/test.csv` | **25 976** | Drugi plik z Kaggle |
-| **Całość w projekcie** | **129 880** | `train.csv` + `test.csv` **połączone**, potem jeden podział 70/15/15 |
-| Train w modelu (70%) | **90 915** | Tu model **się uczy** |
-| Val (15%) | **19 482** | Kontrola w trakcie treningu |
-| Test końcowy (15%) | **19 483** | **Egzamin końcowy** — stąd `19483` w raportach |
+| `data/train.csv` | **103,904** | A separate Kaggle file (~104–105k) — **not** the same as "train 70%" in the model |
+| `data/test.csv` | **25,976** | The second Kaggle file |
+| **All data in the project** | **129,880** | `train.csv` + `test.csv` **combined**, then one 70/15/15 split |
+| Train in the model (70%) | **90,915** | This is where the model **learns** |
+| Val (15%) | **19,482** | Control during training |
+| Final test (15%) | **19,483** | The **final exam** — hence `19483` in the reports |
 
-**Nie ma błędu:** ~105k to plik Kaggle train, ~130k to suma obu plików, ~91k to train **wewnątrz** eksperymentu, ~19.5k to końcowy test.
+**There is no error:** ~105k is the Kaggle train file, ~130k is the sum of both files, ~91k is the train **inside** the experiment, ~19.5k is the final test.
 
-### Raport na screenie (`satisfied` / `neutral or dissatisfied`) — dlaczego to myli?
+### The report in the screenshot (`satisfied` / `neutral or dissatisfied`) — why is it confusing?
 
-Jeśli w dokumentacji widzisz klasy **`satisfied`** i **`neutral or dissatisfied`** zamiast **Business / Eco / Eco Plus**, to **stary wykres/screen** (oryginalny target Kaggle `satisfaction`), **nie** wynik tego projektu.
+If in the documentation you see the classes **`satisfied`** and **`neutral or dissatisfied`** instead of **Business / Eco / Eco Plus**, that is an **old chart/screenshot** (the original Kaggle target `satisfaction`), **not** a result of this project.
 
-W tym projekcie raporty są dla **`Class`** — patrz `results/airline/classification_report_*.txt` lub sekcję „Raporty klasyfikacji” poniżej.
+In this project the reports are for **`Class`** — see `results/airline/classification_report_*.txt` or the "Classification reports" section below.
 
-### Jak działa train / val / test? (krok po kroku)
+### How do train / val / test work? (step by step)
 
-**Tak — ogólnie dobrze myślisz**, tylko val to nie jest „test końcowy”, tylko **kontrola w trakcie nauki**.
+**Yes — you're generally thinking right**, except val is not a "final test" but a **control during learning**.
 
 ```
-Całość danych (po połączeniu train.csv + test.csv z Kaggle)
+All data (after combining train.csv + test.csv from Kaggle)
         │
-        ├── 70% TRAIN   → model UCZY SIĘ (zmienia wagi)
-        ├── 15% VAL     → kontrola PODCZAS uczenia (nie zmienia wag)
-        └── 15% TEST    → egzamin KOŃCOWY (dopiero na końcu, raz)
+        ├── 70% TRAIN   → the model LEARNS (updates weights)
+        ├── 15% VAL     → control DURING training (does not update weights)
+        └── 15% TEST    → the FINAL exam (only at the very end, once)
 ```
 
-**Kolejność w projekcie:**
+**Order in the project:**
 
-1. **Preprocessing** — parametry (średnia, mediana, one-hot) liczone **tylko na train**, potem to samo stosowane na val i test.
-2. **Grid search (18 wariantów MLP)** — każdy wariant:
-   - uczy się na **train (70%)**,
-   - co epokę sprawdzany na **val (15%)**,
-   - wybieramy najlepszy wariant po **F1-macro na val**.
-3. **Trening baseline i tuned** — znowu train + val (early stopping, scheduler LR).
-4. **Dopiero na końcu** — ocena **baseline, tuned i Random Forest** na **test (15%)** → raporty, tabela w README, wykresy.
+1. **Preprocessing** — parameters (mean, median, one-hot) computed **on train only**, then the same applied to val and test.
+2. **Grid search (18 MLP variants)** — each variant:
+   - learns on **train (70%)**,
+   - is checked every epoch on **val (15%)**,
+   - we pick the best variant by **F1-macro on val**.
+3. **Training baseline and tuned** — again train + val (early stopping, LR scheduler).
+4. **Only at the end** — evaluating **baseline, tuned and Random Forest** on **test (15%)** → reports, the table in the README, charts.
 
-**Val (15%) służy do:**
-- early stopping (kiedy przestać uczyć),
-- zmniejszania learning rate (wykres `scheduler_lr.png`),
-- wyboru najlepszej konfiguracji z grid search.
+**Val (15%) is used for:**
+- early stopping (when to stop training),
+- reducing the learning rate (the `scheduler_lr.png` chart),
+- selecting the best configuration from the grid search.
 
-**Test (15%)** — model **nie był** na nim używany przy wyborze hiperparametrów. To uczciwy wynik końcowy (np. accuracy 0.76 / 0.77 w raporcie).
+**Test (15%)** — the model was **not** used on it when choosing hyperparameters. It is a fair final result (e.g. accuracy 0.76 / 0.77 in the report).
 
-**Ważne:** val **nie zastępuje** testu. Val = wiele razy w trakcie treningu. Test = **jeden raz** na końcu.
-
----
-
-### Co to jest wyciek danych (data leakage)? — rozpisane krok po kroku
-
-**Wyciek danych** = model lub preprocessing **dostaje podpowiedź z testu albo z odpowiedzi** zanim zrobimy końcową ocenę. Wtedy wynik na teście jest **za wysoki** i **nie wiarygodny**.
-
-**Analogia:** na egzaminie widziałeś pytania wcześniej — ocena nie oddaje realnej wiedzy.
+**Important:** val **does not replace** the test. Val = many times during training. Test = **once** at the end.
 
 ---
 
-#### Przykład na żywo: skalowanie wieku (`Age`)
+### What is data leakage? — laid out step by step
 
-Załóżmy, że na **train** średni wiek = 40, na **test** średni wiek = 60.
+**Data leakage** = the model or preprocessing **gets a hint from the test set or from the answers** before we do the final evaluation. Then the test result is **too high** and **not credible**.
 
-**Źle (wyciek):**
-1. Liczysz średnią z **train + test** razem → np. 45.
-2. Skalujesz wszystkie wiersze tą średnią.
-3. Model „wie” pośrednio, że w teście są starsi pasażerowie (bo średnia 45 zawiera test).
-
-**Dobrze (bez wycieku — tak jest u nas):**
-1. **`fit` na train:** średnia = 40, odchylenie z train.
-2. **`transform` na test:** wiek 60 → `(60 - 40) / odchylenie_train` — test nie zmienia średniej, tylko używa parametrów z train.
-
-To samo dotyczy: mediany przy brakach, OneHot (jakie kategorie istnieją), grid search (który model wybrać).
+**Analogy:** you saw the exam questions in advance — the grade does not reflect real knowledge.
 
 ---
 
-#### Jak dane mogą wyciekać? (tabela)
+#### A live example: scaling Age (`Age`)
 
-| Błąd | Co robisz źle | Skutek |
+Suppose the mean age on **train** = 40 and on **test** = 60.
+
+**Wrong (leakage):**
+1. You compute the mean from **train + test** together → e.g. 45.
+2. You scale all rows with that mean.
+3. The model "knows" indirectly that the test contains older passengers (because the mean of 45 includes the test).
+
+**Right (no leakage — as we do it):**
+1. **`fit` on train:** mean = 40, std from train.
+2. **`transform` on test:** age 60 → `(60 - 40) / std_train` — the test does not change the mean, it only uses the parameters from train.
+
+The same applies to: the median for missing values, OneHot (which categories exist), the grid search (which model to pick).
+
+---
+
+#### How can data leak? (table)
+
+| Mistake | What you do wrong | Consequence |
 |------|----------------|--------|
-| Preprocessing na całości | `fit` na train+test+val razem | Test „wchodzi” do średniej, mediany, one-hot |
-| Uczenie na teście | Wagi uczą się na 15% test | Test już nie jest niewidziany |
-| Wybór modelu po teście | Grid search: „najlepszy” = najwyższy wynik na test | Test użyty do strojenia |
-| `satisfaction` w cechach | Model widzi zadowolenie przy przewidywaniu `Class` | Podpowiedź (ściąganie) |
-| `Class` w preprocessingu cech | Np. skalowanie z użyciem etykiety | Bezpośrednia odpowiedź w cechach |
+| Preprocessing on all data | `fit` on train+test+val together | The test "enters" the mean, median, one-hot |
+| Training on the test | Weights learn on the 15% test | The test is no longer unseen |
+| Selecting a model on the test | Grid search: "best" = highest score on test | The test is used for tuning |
+| `satisfaction` in the features | The model sees satisfaction when predicting `Class` | A hint (cheating) |
+| `Class` in feature preprocessing | E.g. scaling using the label | The direct answer in the features |
 
 ---
 
-#### Co robimy w tym projekcie (kolejność — bez wycieku)
+#### What we do in this project (the order — no leakage)
 
 ```
-1. Łączymy train.csv + test.csv Kaggle  →  129 880 wierszy
-2. Dzielimy 70% / 15% / 15%             →  train / val / test
-3. fit preprocessingu TYLKO na train   →  mediana, scaler, one-hot
-4. transform na val i test             →  te same parametry, bez fit
-5. Uczenie MLP na train                →  wagi z train
-6. Kontrola na val                      →  early stopping, LR, grid search
-7. JEDEN RAZ ocena na test              →  raporty (0.76, 0.77, 19483 próbek)
+1. Combine train.csv + test.csv from Kaggle  →  129,880 rows
+2. Split 70% / 15% / 15%                      →  train / val / test
+3. Fit preprocessing ONLY on train            →  median, scaler, one-hot
+4. Transform on val and test                  →  the same parameters, no fit
+5. Train the MLP on train                     →  weights from train
+6. Control on val                             →  early stopping, LR, grid search
+7. ONE evaluation on the test                 →  reports (0.76, 0.77, 19483 samples)
 ```
 
-| Krok | Zbiór | Czy może być wyciek? | U nas |
+| Step | Set | Can it leak? | Here |
 |------|-------|----------------------|-------|
-| Średnia wieku, mediana opóźnień | train only przy `fit` | Tak, jeśli liczysz z testem | **Nie** — tylko train |
-| Skalowanie val/test | transform | Tak, jeśli znowu `fit` | **Nie** — tylko transform |
-| Który MLP wybrać (grid) | val | Tak, jeśli po test | **Val** |
-| Raport accuracy / F1 | test | Tak, jeśli wcześniej stroisz na test | **Test tylko na końcu** |
-| Kolumna `satisfaction` | — | Tak, jako cecha | **Usunięta** |
-| Target `Class` | tylko jako y | Tak, w cechach X | **Tylko y, nie w X** |
+| Mean age, median of delays | train only at `fit` | Yes, if you compute it with the test | **No** — train only |
+| Scaling val/test | transform | Yes, if you `fit` again | **No** — transform only |
+| Which MLP to pick (grid) | val | Yes, if done on test | **Val** |
+| Accuracy / F1 report | test | Yes, if you tuned on test first | **Test only at the end** |
+| The `satisfaction` column | — | Yes, as a feature | **Removed** |
+| The `Class` target | only as y | Yes, in the features X | **Only y, not in X** |
 
 ---
 
-#### `fit` vs `transform` — najprościej
+#### `fit` vs `transform` — the simplest version
 
-| Słowo | Po polsku | Kiedy |
+| Word | In plain terms | When |
 |-------|-----------|--------|
-| **fit** | „naucz parametry” | Tylko na **train (70%)** — np. mediana Age, średnia do skalera |
-| **transform** | „zastosuj te parametry” | Na **val** i **test** — bez ponownego liczenia |
+| **fit** | "learn the parameters" | On **train (70%)** only — e.g. the median of Age, the mean for the scaler |
+| **transform** | "apply those parameters" | On **val** and **test** — without recomputing |
 
-**Wyciek byłby:** `fit` na całym zbiorze albo na train+test.  
-**U nas:** `fit_preprocessor(train_df)` w `preprocessing.py`, potem `transformuj_cechy(val/test, ...)`.
+**Leakage would be:** `fit` on the whole dataset or on train+test.
+**Here:** `fit_preprocessor(train_df)` in `preprocessing.py`, then `transformuj_cechy(val/test, ...)`.
 
 ---
 
-#### Gdzie w kodzie?
+#### Where in the code?
 
 ```text
 preprocessing.py
-  fit_preprocessor(train_df)     ← fit TYLKO train
+  fit_preprocessor(train_df)     ← fit ONLY on train
   transformuj_cechy(val_df)      ← transform
-  transformuj_cechy(test_df)    ← transform
+  transformuj_cechy(test_df)     ← transform
 
 experiment.py
-  trenuj_mlp(..., x_train, y_train, x_val, y_val)   ← uczenie + val
-  przewidz_mlp(..., x_test)                         ← test na końcu
+  trenuj_mlp(..., x_train, y_train, x_val, y_val)   ← training + val
+  przewidz_mlp(..., x_test)                         ← test at the end
 ```
 
-**Na obronę (1 zdanie):**  
-„Wyciek to gdy test lub odpowiedź wpływa na uczenie. U nas preprocessing fitujemy na train, model stroimy na val, a test używamy wyłącznie raz do końcowego raportu.”
+**For the defense (one sentence):**
+"Leakage is when the test or the answer influences training. Here we fit preprocessing on train, tune the model on val, and use the test only once for the final report."
 
 ---
 
-### Dlaczego usuwamy `Unnamed: 0`, `id`, `satisfaction`?
-- `Unnamed: 0` to techniczny numer wiersza z CSV, nie cecha.
-- `id` to identyfikator pasażera, model nie powinien uczyć się numerów.
-- `satisfaction` to inny target (zadowolony/niezadowolony). W tym projekcie target to `Class`.
+### Why do we drop `Unnamed: 0`, `id`, `satisfaction`?
+- `Unnamed: 0` is a technical row number from the CSV, not a feature.
+- `id` is a passenger identifier; the model should not learn from numbers.
+- `satisfaction` is a different target (satisfied/dissatisfied). In this project the target is `Class`.
 
-### `satisfaction` (satisfied / neutral or dissatisfied) — czego nie używamy?
+### `satisfaction` (satisfied / neutral or dissatisfied) — what we do not use
 
-W CSV są **dwie osobne kolumny**:
+The CSV has **two separate columns**:
 
-| Kolumna | Znaczenie |
+| Column | Meaning |
 |---------|-----------|
-| `satisfaction` | Czy pasażer zadowolony: `satisfied` lub `neutral or dissatisfied` |
-| `Class` | Klasa lotu: `Business`, `Eco`, `Eco Plus` |
+| `satisfaction` | Whether the passenger is satisfied: `satisfied` or `neutral or dissatisfied` |
+| `Class` | The flight class: `Business`, `Eco`, `Eco Plus` |
 
-To **nie to samo** (można być zadowolonym w Eco albo niezadowolonym w Business).
+These are **not the same** (you can be satisfied in Eco or dissatisfied in Business).
 
-- **Usuwamy** kolumnę `satisfaction` z cech wejściowych — model jej nie widzi.
-- **Zostawiamy** `Class` jako odpowiedź (target) do nauki.
-- Wiersze z `satisfied` i `neutral or dissatisfied` **zostają** — używamy ich pozostałych kolumn.
-- `Class` **nie zastępuje** `satisfaction` — od początku przewidujemy klasę podróży, nie zadowolenie.
+- We **drop** the `satisfaction` column from the input features — the model does not see it.
+- We **keep** `Class` as the answer (target) to learn.
+- Rows with `satisfied` and `neutral or dissatisfied` **stay** — we use their other columns.
+- `Class` **does not replace** `satisfaction` — from the start we predict the travel class, not satisfaction.
 
-### Jak kodujemy cechy kategoryczne (3 → 6 kolumn)?
+### How do we encode categorical features (3 → 6 columns)?
 
-3 kolumny tekstowe: `Gender`, `Customer Type`, `Type of Travel`.
+3 text columns: `Gender`, `Customer Type`, `Type of Travel`.
 
-**OneHotEncoder** — każda wartość dostaje osobną kolumnę 0/1, np. `Gender_Male=1`, `Gender_Female=0`.
+**OneHotEncoder** — each value gets its own 0/1 column, e.g. `Gender_Male=1`, `Gender_Female=0`.
 
-| Źródło | Wartości | Kolumn po kodowaniu |
+| Source | Values | Columns after encoding |
 |--------|----------|---------------------|
 | Gender | 2 | 2 |
 | Customer Type | 2 | 2 |
 | Type of Travel | 2 | 2 |
-| **Razem** | **3** | **6** |
+| **Total** | **3** | **6** |
 
-Razem z 18 cechami numerycznymi → **24 cechy** wejściowe do modelu.
+Together with the 18 numeric features → **24 input features** to the model.
 
-### Cechy numeryczne — czy są „zamieniane”?
+### Numeric features — are they "converted"?
 
-**Nie** na kategorie. 18 kolumn zostaje liczbami: czyszczenie → uzupełnienie braków (mediana) → **StandardScaler** (skalowanie). One-hot dotyczy **tylko** kategorycznych.
+**Not** into categories. The 18 columns stay numeric: cleaning → imputing missing values (median) → **StandardScaler** (scaling). One-hot applies **only** to the categorical features.
 
-### Dlaczego w tabeli accuracy 0.7633, a w raporcie 0.76?
+### Why is accuracy 0.7633 in the table but 0.76 in the report?
 
-To **ta sama wartość**, tylko inne zaokrąglenie:
+It is the **same value**, only rounded differently:
 
-- `model_comparison.csv` — pełna liczba (np. 0.7633),
-- `classification_report_*.txt` — zaokrąglenie do 2 miejsc (0.76).
+- `model_comparison.csv` — the full number (e.g. 0.7633),
+- `classification_report_*.txt` — rounded to 2 decimals (0.76).
 
-Nie ma sprzeczności — raport jest bardziej „płaski” wizualnie.
+There is no contradiction — the report is just visually "flatter".
 
-### Co znaczy `accuracy` z liczbą 19483 w raporcie?
+### What does `accuracy` with the number 19483 in the report mean?
 
-- **19483** = liczba wszystkich próbek na **teście** (support łącznie),
-- **accuracy** (np. 0.76) = **jedna** metryka: jaki % wszystkich trafień na 3 klasach łącznie.
+- **19483** = the number of all samples in the **test** (total support),
+- **accuracy** (e.g. 0.76) = a **single** metric: the % of all correct predictions across the 3 classes combined.
 
-Per klasa są osobne wiersze (Business, Eco, Eco Plus). To klasyfikacja **3-klasowa**, nie binarna (2 wartości).
+There are separate rows per class (Business, Eco, Eco Plus). This is **3-class** classification, not binary (2 values).
 
-### Co pokazuje wykres `scheduler_lr.png`?
+### What does the `scheduler_lr.png` chart show?
 
-- **LR (learning rate)** = wielkość kroku przy aktualizacji wag.
-- Na początku LR większy (szybsza nauka).
-- Gdy **F1 na val** przestaje rosnąć → `ReduceLROnPlateau` obniża LR (schodki w dół na wykresie).
-- Sens: najpierw szybko, potem dokładniej „dostrajać” model.
+- **LR (learning rate)** = the step size when updating the weights.
+- At the start the LR is larger (faster learning).
+- When **F1 on val** stops growing → `ReduceLROnPlateau` lowers the LR (steps down on the chart).
+- The idea: fast first, then "fine-tune" the model more precisely.
 
-### Co znaczy „fit na train, transform na val/test”?
-- **fit** = policz parametry preprocessingu (średnia, odchylenie, mediana, słownik kategorii) na train.
-- **transform** = zastosuj te same parametry do val/test.
-- Dzięki temu nie ma przecieku danych (model nie podgląda testu).
+### What does "fit on train, transform on val/test" mean?
+- **fit** = compute the preprocessing parameters (mean, std, median, category dictionary) on train.
+- **transform** = apply the same parameters to val/test.
+- This way there is no data leakage (the model does not peek at the test).
 
-### Po co `handle_unknown='ignore'`?
-Gdy w val/test pojawi się kategoria, której nie było na train, kod się nie wysypie.
+### Why `handle_unknown='ignore'`?
+If a category not present in train appears in val/test, the code does not crash.
 
-### Dlaczego 70/15/15 zamiast 80/20?
-- 80/20 jest OK, gdy tylko trenujesz i testujesz.
-- Tu stroimy model (grid search + early stopping), więc potrzebny jest osobny **validation set**.
-- Dlatego: 70% train, 15% validation, 15% test.
+### Why 70/15/15 instead of 80/20?
+- 80/20 is fine if you only train and test.
+- Here we tune the model (grid search + early stopping), so a separate **validation set** is needed.
+- Hence: 70% train, 15% validation, 15% test.
 
-### Czemu w plikach widzę `test.csv` ~25k, a w wynikach test ~19.5k?
-Bo łączymy `data/train.csv` + `data/test.csv` Kaggle, a potem robimy własny podział 70/15/15.
-Finalny test to 15% całości, czyli ok. 19 483.
+### Why is `test.csv` ~25k in the files but the test is ~19.5k in the results?
+Because we combine `data/train.csv` + `data/test.csv` from Kaggle and then make our own 70/15/15 split.
+The final test is 15% of the whole, i.e. about 19,483.
 
-### Co to znaczy `output_dim=3`?
-Mamy 3 klasy targetu `Class`: `Business`, `Eco`, `Eco Plus`. Dlatego ostatnia warstwa ma 3 neurony.
+### What does `output_dim=3` mean?
+We have 3 classes of the `Class` target: `Business`, `Eco`, `Eco Plus`. That is why the last layer has 3 neurons.
 
-### Co robią bloki `Linear -> BatchNorm -> ReLU -> Dropout`?
-- `Linear`: liczy ważone sumy cech.
-- `BatchNorm`: stabilizuje wartości między warstwami.
-- `ReLU`: dodaje nieliniowość (model staje się „mądrzejszy” niż prosta linia).
-- `Dropout`: losowo wyłącza część neuronów podczas treningu, żeby model się nie przeuczał.
+### What do the `Linear -> BatchNorm -> ReLU -> Dropout` blocks do?
+- `Linear`: computes weighted sums of features.
+- `BatchNorm`: stabilizes the values between layers.
+- `ReLU`: adds non-linearity (the model becomes "smarter" than a plain line).
+- `Dropout`: randomly disables some neurons during training so the model does not overfit.
 
-### Co daje więcej warstw i neuronów?
-Większa sieć może nauczyć się trudniejszych zależności, ale łatwiej się przeucza. Dlatego testujemy kilka wariantów i wybieramy najlepszy.
+### What do more layers and neurons give?
+A larger network can learn harder relationships, but it overfits more easily. That is why we test several variants and pick the best one.
 
-### Co to jest grid search?
-Automatyczne sprawdzanie wielu kombinacji parametrów (architektura, dropout, learning rate) i wybór najlepszej po wyniku walidacyjnym.
+### What is a grid search?
+Automatically checking many parameter combinations (architecture, dropout, learning rate) and choosing the best one by the validation result.
 
-### Co to jest CrossEntropyLoss?
-Funkcja straty dla klasyfikacji wieloklasowej. Karze model, gdy nisko ocenia prawdziwą klasę.
+### What is CrossEntropyLoss?
+A loss function for multiclass classification. It penalizes the model when it scores the true class low.
 
-### Co to są class weights?
-Rzadka klasa (`Eco Plus`) dostaje większą karę za błąd, więc model bardziej się na niej skupia.
+### What are class weights?
+The rare class (`Eco Plus`) receives a larger penalty for a mistake, so the model focuses on it more.
 
-### Co to jest F1-macro?
-F1 liczone osobno dla każdej klasy, potem średnia. Każda klasa ma taką samą wagę.
+### What is F1-macro?
+F1 computed separately for each class, then averaged. Each class has the same weight.
 
-### Co to jest SMOTE / oversampling?
-- **Oversampling**: zwiększanie liczby próbek klasy mniejszościowej.
-- **SMOTE**: tworzenie nowych, sztucznych próbek tej klasy.
-W tym projekcie nie używamy tego (zgodnie z wymaganiem) — używamy class weights.
+### What is SMOTE / oversampling?
+- **Oversampling**: increasing the number of samples of the minority class.
+- **SMOTE**: creating new, synthetic samples of that class.
+In this project we do not use this (per the requirement) — we use class weights.
 
-### Czym różnią się metryki?
-- `accuracy`: procent wszystkich trafień.
-- `precision_macro`: jak często model ma rację, gdy wskazuje klasę.
-- `recall_macro`: ile prawdziwych przypadków klasy wykrył.
-- `f1_macro`: kompromis precision/recall, średnio po klasach.
+### How do the metrics differ?
+- `accuracy`: the percentage of all correct predictions.
+- `precision_macro`: how often the model is right when it points to a class.
+- `recall_macro`: how many real cases of a class it detected.
+- `f1_macro`: a precision/recall compromise, averaged over classes.
 
-### Co znaczy `model.eval()`?
-Tryb oceny modelu: dropout jest wyłączony, a batchnorm działa stabilnie.
+### What does `model.eval()` mean?
+The model's evaluation mode: dropout is disabled and batchnorm behaves stably.
 
-### Co to jest AdamW, ReduceLROnPlateau, early stopping i epoka?
-- **AdamW**: algorytm aktualizacji wag.
-- **ReduceLROnPlateau**: zmniejsza learning rate, gdy wynik stoi w miejscu.
-- **Early stopping**: kończy trening, gdy brak poprawy przez kilka epok.
-- **Epoka**: jedno pełne przejście przez cały zbiór treningowy.
+### What are AdamW, ReduceLROnPlateau, early stopping and an epoch?
+- **AdamW**: a weight-update algorithm.
+- **ReduceLROnPlateau**: reduces the learning rate when the result stalls.
+- **Early stopping**: ends training when there is no improvement for several epochs.
+- **Epoch**: one full pass through the entire training set.
 
 ---
 
-## Model MLP (`airline_project/model.py`)
+## MLP model (`airline_project/model.py`)
 
-### Architektura warstwy ukrytej
+### Hidden-layer architecture
 
 ```
 Linear → BatchNorm1d → ReLU → Dropout
 ```
 
-- **Linear** — transformacja liniowa (uczone wagi + bias)
-- **BatchNorm1d** — normalizacja w batchu (stabilizacja treningu)
-- **ReLU** — aktywacja nieliniowa max(0, x)
-- **Dropout** — regularyzacja (losowe zerowanie neuronów)
+- **Linear** — a linear transformation (learned weights + bias)
+- **BatchNorm1d** — batch normalization (training stabilization)
+- **ReLU** — a non-linear activation max(0, x)
+- **Dropout** — regularization (random neuron zeroing)
 
-### Elementy uczenia
+### Training components
 
-| Element | Opis |
+| Component | Description |
 |---------|------|
 | Optimizer | AdamW (weight_decay=1e-4) |
-| Loss | CrossEntropyLoss z **class weights** |
+| Loss | CrossEntropyLoss with **class weights** |
 | Scheduler | ReduceLROnPlateau (factor=0.5, patience=3) |
-| Early stopping | Walidacyjne macro F1 (patience=5, min_delta=1e-4) |
+| Early stopping | Validation macro F1 (patience=5, min_delta=1e-4) |
 | Batch size | 1024 |
-| GPU | Automatyczna detekcja CUDA / MPS / CPU |
+| GPU | Automatic CUDA / MPS / CPU detection |
 
-### Grid search (18 konfiguracji)
+### Grid search (18 configurations)
 
-| Parametr | Wartości |
+| Parameter | Values |
 |----------|----------|
-| Architektura | (128,64), (256,128,64), (512,256,128) |
+| Architecture | (128,64), (256,128,64), (512,256,128) |
 | Dropout | 0.1, 0.2, 0.3 |
 | Learning rate | 1e-3, 5e-4 |
 
-Baseline: (128,64), dropout=0.2, lr=1e-3. Tuned: najlepsza z siatki.
+Baseline: (128,64), dropout=0.2, lr=1e-3. Tuned: the best from the grid.
 
 ---
 
-## Wyniki na zbiorze testowym (19 483 próbki)
+## Results on the test set (19,483 samples)
 
 | Model | Accuracy | Precision macro | Recall macro | F1-macro |
 |-------|----------|-----------------|--------------|----------|
@@ -391,13 +391,13 @@ Baseline: (128,64), dropout=0.2, lr=1e-3. Tuned: najlepsza z siatki.
 | **MLP tuned** | 0.7750 | 0.6497 | 0.6705 | **0.6465** |
 | Random Forest | **0.8644** | 0.6791 | 0.6248 | 0.6058 |
 
-**Najlepsza konfiguracja:** MLP 512×256×128, dropout=0.3, lr=1e-3
+**Best configuration:** MLP 512×256×128, dropout=0.3, lr=1e-3
 
 ---
 
-## Raporty Klasyfikacji (dokładne)
+## Classification reports (detailed)
 
-Poniżej są dokładne raporty per klasa dla 3 modeli.
+Below are the detailed per-class reports for the 3 models.
 
 ### MLP baseline
 
@@ -441,43 +441,43 @@ weighted avg       0.83      0.77      0.80     19483
 weighted avg       0.83      0.86      0.84     19483
 ```
 
-### Co te wyniki mówią (prosto)?
-- `Business`: wszystkie modele działają bardzo dobrze.
-- `Eco`: Random Forest ma bardzo wysokie `recall` (0.95), ale odbywa się to kosztem klasy `Eco Plus`.
-- `Eco Plus`: MLP (recall ~0.41-0.42) wykrywa tę klasę dużo lepiej niż RF (recall 0.01).
-- Dlatego RF ma wyższą `accuracy`, ale gorszy `F1-macro` od MLP tuned.
+### What do these results tell us (plainly)?
+- `Business`: all models work very well.
+- `Eco`: Random Forest has very high `recall` (0.95), but at the expense of the `Eco Plus` class.
+- `Eco Plus`: the MLP (recall ~0.41-0.42) detects this class much better than RF (recall 0.01).
+- That is why RF has higher `accuracy` but a worse `F1-macro` than the MLP tuned.
 
 ---
 
-## Jak czytać wykres LR (scheduler_lr.png)?
+## How to read the LR chart (scheduler_lr.png)?
 
-- LR to `learning rate`, czyli wielkość kroku aktualizacji wag.
-- Na początku LR jest większy, żeby szybciej uczyć model.
-- Gdy walidacyjne `F1-macro` przestaje rosnąć, `ReduceLROnPlateau` zmniejsza LR (zwykle o połowę).
-- Na wykresie widać „schodki” w dół — to normalne i pożądane.
-- Sens: duży krok na początku, mniejszy krok na końcu = stabilniejsze „dostrajanie” modelu.
-
----
-
-## Wnioski
-
-1. **MLP tuned wygrywa F1-macro** — lepiej balansuje klasy dzięki class weights.
-2. **RF wygrywa accuracy**, ale niemal ignoruje Eco Plus (recall ~1%).
-3. **Eco Plus** to klasa problematyczna (~7%) — MLP osiąga recall ~41%.
-4. **Class weights w loss** są kluczowe dla wykrywania mniejszościowej klasy.
-5. **Ograniczenia:** mała klasa Eco Plus, brak feature engineering, grid search 18 konfiguracji.
+- LR is the `learning rate`, i.e. the step size for updating the weights.
+- At the start the LR is larger, to train the model faster.
+- When the validation `F1-macro` stops growing, `ReduceLROnPlateau` reduces the LR (usually by half).
+- On the chart you can see "steps" going down — this is normal and desirable.
+- The idea: a large step at the start, a smaller step at the end = more stable model "fine-tuning".
 
 ---
 
-## Struktura projektu
+## Conclusions
+
+1. **MLP tuned wins on F1-macro** — it balances the classes better thanks to class weights.
+2. **RF wins on accuracy**, but almost ignores Eco Plus (recall ~1%).
+3. **Eco Plus** is a problematic class (~7%) — the MLP reaches recall ~41%.
+4. **Class weights in the loss** are key to detecting the minority class.
+5. **Limitations:** the small Eco Plus class, no feature engineering, a grid search of 18 configurations.
+
+---
+
+## Project structure
 
 ```
 ├── airline_project/
 │   ├── __init__.py
-│   ├── config.py          # konfiguracja (ścieżki, hiperparametry, cechy)
-│   ├── model.py           # klasa AirlineMLP + wybór urządzenia
-│   ├── preprocessing.py   # czyszczenie, podział, imputacja, skalowanie
-│   └── experiment.py      # grid search, trening, ewaluacja, wykresy
+│   ├── config.py          # configuration (paths, hyperparameters, features)
+│   ├── model.py           # the AirlineMLP class + device selection
+│   ├── preprocessing.py   # cleaning, splitting, imputation, scaling
+│   └── experiment.py      # grid search, training, evaluation, charts
 ├── data/
 │   ├── train.csv
 │   └── test.csv
@@ -494,8 +494,8 @@ weighted avg       0.83      0.86      0.84     19483
 │   ├── airline_passenger_satisfaction_mlp_project2.ipynb
 │   ├── dokumentacja_do125148.docx
 │   └── aktualizuj_dokumentacja.py
-├── run_experiment.py      # punkt wejścia
-├── streamlit_app.py       # dashboard Streamlit
+├── run_experiment.py      # entry point
+├── streamlit_app.py       # Streamlit dashboard
 ├── requirements.txt
 ├── start.sh / start.bat
 └── README.md
@@ -503,11 +503,11 @@ weighted avg       0.83      0.86      0.84     19483
 
 ---
 
-## Dashboard Streamlit
+## Streamlit dashboard
 
 ```bash
 streamlit run streamlit_app.py
 ```
 
-Widoki: Podsumowanie wyników, Raporty klasyfikacji, Wykresy, Lista plików.
-Przycisk „Uruchom pełny eksperyment" pozwala uruchomić trening z poziomu UI.
+Views: Summary, Reports, Charts, Files.
+The "Run the full experiment" button lets you launch training from the UI.

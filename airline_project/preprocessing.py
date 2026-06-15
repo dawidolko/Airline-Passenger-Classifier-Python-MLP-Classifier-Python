@@ -1,7 +1,7 @@
 """
-Moduł preprocessingu danych Airline Passenger Satisfaction.
-Odpowiada za czyszczenie, usuwanie wartości nierealnych, podział stratyfikowany,
-budowę pipeline'u (imputacja + skalowanie + one-hot) oraz transformację cech.
+Data preprocessing module for Airline Passenger Satisfaction.
+Responsible for cleaning, removing unrealistic values, the stratified split,
+building the pipeline (imputation + scaling + one-hot) and transforming features.
 """
 from __future__ import annotations
 
@@ -31,8 +31,8 @@ from airline_project.config import (
 
 def ustaw_seedy(seed: int = RANDOM_STATE) -> None:
     """
-    Ustawia ziarno losowości dla modułów random i numpy.
-    Zapewnia powtarzalność podziałów danych i inicjalizacji wag.
+    Sets the random seed for the random and numpy modules.
+    Ensures reproducibility of data splits and weight initialization.
     """
     random.seed(seed)
     np.random.seed(seed)
@@ -40,11 +40,11 @@ def ustaw_seedy(seed: int = RANDOM_STATE) -> None:
 
 def remove_unrealistic_values(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Zastępuje wartości nielogiczne na NaN zgodnie z progami dziedzinowymi:
-    - Age: poza zakresem [0, 100]
+    Replaces illogical values with NaN according to domain thresholds:
+    - Age: outside the range [0, 100]
     - Flight Distance: <= 0
-    - Opóźnienia (Departure/Arrival): < 0 lub > 1440 min (24h)
-    - Oceny usług (14 kolumn): poza zakresem [0, 5]
+    - Delays (Departure/Arrival): < 0 or > 1440 min (24h)
+    - Service scores (14 columns): outside the range [0, 5]
     """
     output = df.copy()
 
@@ -71,37 +71,37 @@ def remove_unrealistic_values(df: pd.DataFrame) -> pd.DataFrame:
 
 def raportuj_braki_i_odstajace(df: pd.DataFrame, etap: str) -> None:
     """
-    Wypisuje diagnostykę braków danych (NaN) i statystyki numeryczne.
-    Wywoływana przed i po czyszczeniu, żeby było widać efekt preprocessingu.
+    Prints diagnostics of missing data (NaN) and numeric statistics.
+    Called before and after cleaning so the effect of preprocessing is visible.
     """
     n_rows = len(df)
     n_nan_total = int(df.isna().sum().sum())
     n_rows_with_nan = int(df.isna().any(axis=1).sum())
     pct_rows_nan = n_rows_with_nan / n_rows * 100 if n_rows > 0 else 0
 
-    print(f"\n--- Diagnostyka danych [{etap}] ---")
-    print(f"  Liczba wierszy: {n_rows}")
-    print(f"  Łączna liczba NaN w całym zbiorze: {n_nan_total}")
-    print(f"  Wiersze z przynajmniej 1 brakiem: {n_rows_with_nan} ({pct_rows_nan:.2f}%)")
+    print(f"\n--- Data diagnostics [{etap}] ---")
+    print(f"  Number of rows: {n_rows}")
+    print(f"  Total number of NaN across the dataset: {n_nan_total}")
+    print(f"  Rows with at least 1 missing value: {n_rows_with_nan} ({pct_rows_nan:.2f}%)")
 
     cols_with_nan = df.columns[df.isna().any()].tolist()
     if cols_with_nan:
-        print(f"  Kolumny z brakami ({len(cols_with_nan)}):")
+        print(f"  Columns with missing values ({len(cols_with_nan)}):")
         for col in cols_with_nan:
             n = int(df[col].isna().sum())
             print(f"    • {col}: {n} NaN ({n / n_rows * 100:.2f}%)")
     else:
-        print("  Brak kolumn z wartościami NaN.")
+        print("  No columns with NaN values.")
     print()
 
 
 def przygotuj_surowe_dane(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Czyści surowy DataFrame w następujących krokach:
-    1. Usuwa zbędne kolumny (id, indeks, satisfaction)
-    2. Rzutuje kolumny numeryczne (errors='coerce' → nieparsowalne → NaN)
-    3. Usuwa wartości odstające/nielogiczne (remove_unrealistic_values)
-    4. Raportuje ile braków/NaN powstało po czyszczeniu
+    Cleans the raw DataFrame in the following steps:
+    1. Drops unnecessary columns (id, index, satisfaction)
+    2. Casts numeric columns (errors='coerce' → unparseable → NaN)
+    3. Removes outlier / illogical values (remove_unrealistic_values)
+    4. Reports how many missing values/NaN remain after cleaning
     """
     output = df.copy()
     output.columns = output.columns.str.strip()
@@ -110,7 +110,7 @@ def przygotuj_surowe_dane(df: pd.DataFrame) -> pd.DataFrame:
         if col in output.columns:
             output = output.drop(columns=[col])
 
-    raportuj_braki_i_odstajace(output, "PRZED czyszczeniem")
+    raportuj_braki_i_odstajace(output, "BEFORE cleaning")
 
     for col in NUMERIC_COLUMNS:
         if col in output.columns:
@@ -118,22 +118,22 @@ def przygotuj_surowe_dane(df: pd.DataFrame) -> pd.DataFrame:
 
     output = remove_unrealistic_values(output)
 
-    raportuj_braki_i_odstajace(output, "PO usunięciu wartości odstających")
+    raportuj_braki_i_odstajace(output, "AFTER removing outlier values")
 
     return output
 
 
 def zakoduj_target(series: pd.Series, label_to_index: dict[str, int]) -> np.ndarray:
     """
-    Mapuje etykiety tekstowe targetu na indeksy liczbowe (0, 1, 2).
+    Maps the target's text labels to numeric indices (0, 1, 2).
     """
     return series.map(label_to_index).astype(int).to_numpy()
 
 
 def podziel_dane_stratyfikowane(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Tworzy podział train (70%) / validation (15%) / test (15%)
-    z zachowaniem proporcji klas (stratyfikacja po TARGET_COLUMN).
+    Creates a train (70%) / validation (15%) / test (15%) split
+    preserving class proportions (stratification on TARGET_COLUMN).
     """
     train_df, temp_df = train_test_split(
         df,
@@ -153,25 +153,25 @@ def podziel_dane_stratyfikowane(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Data
 
 @dataclass
 class PreprocessingArtifacts:
-    """Przechowuje dopasowany transformer i listę nazw cech po transformacji."""
+    """Holds the fitted transformer and the list of feature names after transformation."""
     transformer: ColumnTransformer
     feature_names: list[str]
 
 
 def fit_preprocessor(train_df: pd.DataFrame) -> PreprocessingArtifacts:
     """
-    Buduje i dopasowuje preprocessing pipeline wyłącznie na zbiorze treningowym:
-    - Numeryczne: SimpleImputer(mediana) → StandardScaler
-    - Kategoryczne: SimpleImputer(moda) → OneHotEncoder
-    Zwraca PreprocessingArtifacts z dopasowanym transformerem i listą cech.
+    Builds and fits the preprocessing pipeline exclusively on the training set:
+    - Numeric: SimpleImputer(median) → StandardScaler
+    - Categorical: SimpleImputer(mode) → OneHotEncoder
+    Returns PreprocessingArtifacts with the fitted transformer and the feature list.
 
-    WAŻNE: imputacja i skalowanie fitowane TYLKO na train — zapobiega data leakage.
-    Braki (NaN) po remove_unrealistic_values są tu uzupełniane medianą/modą.
+    IMPORTANT: imputation and scaling are fitted ONLY on train — this prevents data leakage.
+    Missing values (NaN) left after remove_unrealistic_values are imputed here with the median/mode.
     """
     features_df = train_df.drop(columns=[TARGET_COLUMN])
     n_nan_before = int(features_df.isna().sum().sum())
-    print(f"  Imputacja braków w train: {n_nan_before} NaN do uzupełnienia "
-          f"(mediana dla numerycznych, moda dla kategorycznych)")
+    print(f"  Imputing missing values in train: {n_nan_before} NaN to fill "
+          f"(median for numeric, mode for categorical)")
 
     numeric_pipeline = Pipeline(
         steps=[
@@ -207,8 +207,8 @@ def fit_preprocessor(train_df: pd.DataFrame) -> PreprocessingArtifacts:
 
 def transformuj_cechy(df: pd.DataFrame, artifacts: PreprocessingArtifacts) -> np.ndarray:
     """
-    Transformuje DataFrame do macierzy numerycznej float32
-    używając dopasowanego wcześniej preprocessora (bez ponownego fitu).
+    Transforms the DataFrame into a float32 numeric matrix
+    using the previously fitted preprocessor (without refitting).
     """
     features = df.drop(columns=[TARGET_COLUMN])
     matrix = artifacts.transformer.transform(features)

@@ -1,7 +1,7 @@
 """
-Moduł konfiguracyjny projektu Airline Passenger Satisfaction.
-Zawiera wszystkie stałe: ścieżki, nazwy kolumn, hiperparametry modelu,
-parametry grid search i proporcje podziału danych.
+Configuration module for the Airline Passenger Satisfaction project.
+Contains all constants: paths, column names, model hyperparameters,
+grid-search parameters and data-split ratios.
 """
 from pathlib import Path
 

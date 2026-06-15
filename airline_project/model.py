@@ -1,6 +1,6 @@
 """
-Moduł definiujący architekturę sieci MLP oraz funkcję wyboru urządzenia (GPU/CPU).
-Sieć budowana jest dynamicznie na podstawie listy rozmiarów warstw ukrytych.
+Module defining the MLP network architecture and the device-selection function (GPU/CPU).
+The network is built dynamically from a list of hidden-layer sizes.
 """
 from __future__ import annotations
 
@@ -10,16 +10,16 @@ from torch import nn
 
 class AirlineMLP(nn.Module):
     """
-    Konfigurowalna sieć MLP do klasyfikacji wieloklasowej.
+    A configurable MLP network for multiclass classification.
 
-    Każda warstwa ukryta ma układ: Linear → BatchNorm1d → ReLU → Dropout.
-    Ostatnia warstwa to Linear bez aktywacji (logity wejściowe do CrossEntropyLoss).
+    Each hidden layer follows the layout: Linear → BatchNorm1d → ReLU → Dropout.
+    The final layer is a Linear without activation (logits fed into CrossEntropyLoss).
 
-    Parametry konstruktora:
-        input_dim   — liczba cech wejściowych po preprocessingu
-        hidden_sizes — krotka z rozmiarami kolejnych warstw ukrytych, np. (512, 256, 128)
-        output_dim  — liczba klas (3 w tym projekcie)
-        dropout     — prawdopodobieństwo zerowania neuronu (regularyzacja)
+    Constructor parameters:
+        input_dim   — number of input features after preprocessing
+        hidden_sizes — tuple with the sizes of successive hidden layers, e.g. (512, 256, 128)
+        output_dim  — number of classes (3 in this project)
+        dropout     — probability of zeroing a neuron (regularization)
     """
 
     def __init__(
@@ -46,14 +46,14 @@ class AirlineMLP(nn.Module):
         self.network = nn.Sequential(*layers)
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:
-        """Przepuszcza tensor cech przez sieć i zwraca logity (raw scores)."""
+        """Passes the feature tensor through the network and returns logits (raw scores)."""
         return self.network(features)
 
 
 def wybierz_urzadzenie() -> torch.device:
     """
-    Wybiera najlepsze dostępne urządzenie obliczeniowe dla PyTorch.
-    Priorytet: CUDA (GPU NVIDIA) > MPS (GPU Apple Silicon) > CPU.
+    Selects the best available compute device for PyTorch.
+    Priority: CUDA (NVIDIA GPU) > MPS (Apple Silicon GPU) > CPU.
     """
     if torch.cuda.is_available():
         return torch.device("cuda")

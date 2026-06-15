@@ -1,7 +1,7 @@
 """
-Moduł eksperymentu — orkiestracja pełnego pipeline'u:
-wczytanie danych, preprocessing, grid search MLP, trening RF,
-ewaluacja na zbiorze testowym, zapis wykresów i raportów.
+Experiment module — orchestration of the full pipeline:
+data loading, preprocessing, MLP grid search, RF training,
+evaluation on the test set, saving charts and reports.
 """
 from __future__ import annotations
 
@@ -47,8 +47,8 @@ from airline_project.preprocessing import (
 
 def utworz_loader(x: np.ndarray, y: np.ndarray, batch_size: int, shuffle: bool) -> DataLoader:
     """
-    Tworzy PyTorch DataLoader z macierzy numpy (cechy float32 + etykiety int64).
-    shuffle=True dla treningu (losowa kolejność mini-batchy), False dla ewaluacji.
+    Creates a PyTorch DataLoader from numpy arrays (float32 features + int64 labels).
+    shuffle=True for training (random mini-batch order), False for evaluation.
     """
     dataset = TensorDataset(torch.from_numpy(x), torch.from_numpy(y.astype(np.int64)))
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, drop_last=False)
@@ -56,8 +56,8 @@ def utworz_loader(x: np.ndarray, y: np.ndarray, batch_size: int, shuffle: bool) 
 
 def policz_metryki(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
     """
-    Oblicza zestaw metryk klasyfikacji: accuracy, precision/recall/F1 (macro).
-    Macro = średnia arytmetyczna metryk per klasa (każda klasa ważona równo).
+    Computes a set of classification metrics: accuracy, precision/recall/F1 (macro).
+    Macro = arithmetic mean of per-class metrics (each class weighted equally).
     """
     return {
         "accuracy": float(accuracy_score(y_true, y_pred)),
@@ -69,8 +69,8 @@ def policz_metryki(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
 
 def przewidz_mlp(model: AirlineMLP, x: np.ndarray, device: torch.device, batch_size: int = 1024) -> np.ndarray:
     """
-    Wykonuje inferencję MLP w trybie eval i zwraca tablicę predykcji (indeksy klas).
-    Przetwarza dane w batchach, aby nie przekroczyć pamięci GPU.
+    Runs MLP inference in eval mode and returns an array of predictions (class indices).
+    Processes data in batches to avoid exceeding GPU memory.
     """
     loader = utworz_loader(x, np.zeros(len(x), dtype=np.int64), batch_size=batch_size, shuffle=False)
     model.eval()
@@ -89,8 +89,8 @@ def ocen_na_walidacji(
     device: torch.device,
 ) -> tuple[float, float]:
     """
-    Ocenia model na walidacji: zwraca (średni loss, macro F1).
-    Używane wewnętrznie przez pętlę treningową do early stopping i schedulera.
+    Evaluates the model on validation: returns (mean loss, macro F1).
+    Used internally by the training loop for early stopping and the scheduler.
     """
     model.eval()
     losses: list[float] = []
@@ -123,8 +123,8 @@ def trenuj_mlp(
     device: torch.device,
 ) -> tuple[AirlineMLP, pd.DataFrame, float]:
     """
-    Trenuje jedną konfigurację MLP od zera z AdamW, ReduceLROnPlateau i early stopping.
-    Zwraca: (najlepszy model, DataFrame z historią epok, najlepsze val macro F1).
+    Trains a single MLP configuration from scratch with AdamW, ReduceLROnPlateau and early stopping.
+    Returns: (the best model, a DataFrame with the epoch history, the best val macro F1).
     """
     model = AirlineMLP(
         input_dim=x_train.shape[1],
@@ -192,15 +192,15 @@ def trenuj_mlp(
 
 
 def etykieta_konfiguracji(config: dict[str, Any]) -> str:
-    """Generuje czytelną etykietę konfiguracji, np. 'MLP512x256x128_d0.30_lr1e-03'."""
+    """Generates a readable configuration label, e.g. 'MLP512x256x128_d0.30_lr1e-03'."""
     hidden = "x".join(str(h) for h in config["hidden_sizes"])
     return f"MLP{hidden}_d{config['dropout']:.2f}_lr{config['learning_rate']:.0e}"
 
 
 def zbuduj_siatke() -> list[dict[str, Any]]:
     """
-    Buduje pełną siatkę hiperparametrów (3 architektury × 3 dropout × 2 LR = 18 konfiguracji).
-    Każda konfiguracja to słownik gotowy do przekazania do trenuj_mlp().
+    Builds the full hyperparameter grid (3 architectures × 3 dropout × 2 LR = 18 configurations).
+    Each configuration is a dictionary ready to pass to trenuj_mlp().
     """
     configs: list[dict[str, Any]] = []
     for architecture in ARCHITECTURES:
@@ -224,8 +224,8 @@ def zbuduj_siatke() -> list[dict[str, Any]]:
 
 def zapisz_wykresy(histories: dict[str, pd.DataFrame], confusion_matrices: dict[str, np.ndarray]) -> None:
     """
-    Generuje i zapisuje wykresy: train/val loss, walidacyjne macro F1,
-    scheduler LR oraz macierze pomyłek side-by-side (PNG, 120 DPI).
+    Generates and saves charts: train/val loss, validation macro F1,
+    the LR scheduler and side-by-side confusion matrices (PNG, 120 DPI).
     """
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -234,12 +234,12 @@ def zapisz_wykresy(histories: dict[str, pd.DataFrame], confusion_matrices: dict[
         axes[0].plot(history["epoch"], history["train_loss"], label=f"{model_name} train")
         axes[0].plot(history["epoch"], history["val_loss"], linestyle="--", label=f"{model_name} val")
         axes[1].plot(history["epoch"], history["val_f1_macro"], label=model_name)
-    axes[0].set_title("Strata treningowa i walidacyjna")
-    axes[0].set_xlabel("Epoka")
+    axes[0].set_title("Training and validation loss")
+    axes[0].set_xlabel("Epoch")
     axes[0].set_ylabel("Loss")
     axes[0].legend(fontsize=8)
-    axes[1].set_title("Walidacyjne macro F1")
-    axes[1].set_xlabel("Epoka")
+    axes[1].set_title("Validation macro F1")
+    axes[1].set_xlabel("Epoch")
     axes[1].set_ylabel("Macro F1")
     axes[1].legend(fontsize=8)
     fig.tight_layout()
@@ -249,8 +249,8 @@ def zapisz_wykresy(histories: dict[str, pd.DataFrame], confusion_matrices: dict[
     if "tuned" in histories:
         fig, ax = plt.subplots(figsize=(8, 4))
         ax.plot(histories["tuned"]["epoch"], histories["tuned"]["learning_rate"], color="#1B998B")
-        ax.set_title("Scheduler ReduceLROnPlateau — learning rate")
-        ax.set_xlabel("Epoka")
+        ax.set_title("ReduceLROnPlateau scheduler — learning rate")
+        ax.set_xlabel("Epoch")
         ax.set_ylabel("LR")
         fig.tight_layout()
         fig.savefig(PLOTS_DIR / "scheduler_lr.png", dpi=120)
@@ -260,8 +260,8 @@ def zapisz_wykresy(histories: dict[str, pd.DataFrame], confusion_matrices: dict[
     for ax, (title, cm) in zip(axes, confusion_matrices.items()):
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=CLASS_LABELS, yticklabels=CLASS_LABELS, ax=ax)
         ax.set_title(title)
-        ax.set_xlabel("Predykcja")
-        ax.set_ylabel("Rzeczywista")
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("Actual")
     fig.tight_layout()
     fig.savefig(PLOTS_DIR / "confusion_matrices_side_by_side.png", dpi=120)
     plt.close(fig)
@@ -269,9 +269,9 @@ def zapisz_wykresy(histories: dict[str, pd.DataFrame], confusion_matrices: dict[
 
 def wypisz_wnioski(comparison: pd.DataFrame, best_grid_row: pd.Series) -> None:
     """
-    Drukuje rozbudowane wnioski końcowe po polsku:
-    najlepszy wynik, porównanie modeli, interpretacja macierzy pomyłek,
-    wpływ class weights, ograniczenia i możliwe ulepszenia.
+    Prints detailed final conclusions:
+    best result, model comparison, confusion-matrix interpretation,
+    the effect of class weights, limitations and possible improvements.
     """
     best_test = comparison.sort_values("f1_macro", ascending=False).iloc[0]
     baseline = comparison[comparison["model"] == "MLP baseline"].iloc[0]
@@ -279,18 +279,18 @@ def wypisz_wnioski(comparison: pd.DataFrame, best_grid_row: pd.Series) -> None:
     rf = comparison[comparison["model"] == "Random Forest"].iloc[0]
 
     print("\n" + "=" * 80)
-    print("WNIOSKI KOŃCOWE")
+    print("FINAL CONCLUSIONS")
     print("=" * 80)
 
     print(
-        f"\n1) NAJLEPSZY WYNIK TESTOWY:\n"
+        f"\n1) BEST TEST RESULT:\n"
         f"   Model: {best_test['model']}\n"
         f"   F1-macro = {best_test['f1_macro']:.4f} | Accuracy = {best_test['accuracy']:.4f}\n"
         f"   Precision macro = {best_test['precision_macro']:.4f} | Recall macro = {best_test['recall_macro']:.4f}"
     )
 
     print(
-        f"\n2) PORÓWNANIE MODELI:\n"
+        f"\n2) MODEL COMPARISON:\n"
         f"   {'Model':<15} {'Accuracy':>10} {'F1-macro':>10} {'Precision':>10} {'Recall':>10}\n"
         f"   {'─' * 55}\n"
         f"   {'MLP baseline':<15} {baseline['accuracy']:>10.4f} {baseline['f1_macro']:>10.4f} "
@@ -303,42 +303,42 @@ def wypisz_wnioski(comparison: pd.DataFrame, best_grid_row: pd.Series) -> None:
 
     print(
         f"\n3) GRID SEARCH:\n"
-        f"   Najlepsza konfiguracja: {best_grid_row['name']}\n"
-        f"   Walidacyjne macro F1 = {best_grid_row['best_val_f1_macro']:.4f}\n"
-        f"   Parametry: dropout={best_grid_row['dropout']}, lr={best_grid_row['learning_rate']}"
+        f"   Best configuration: {best_grid_row['name']}\n"
+        f"   Validation macro F1 = {best_grid_row['best_val_f1_macro']:.4f}\n"
+        f"   Parameters: dropout={best_grid_row['dropout']}, lr={best_grid_row['learning_rate']}"
     )
 
     print(
-        "\n4) INTERPRETACJA MACIERZY POMYŁEK:\n"
-        "   - Business: rozpoznawany bardzo dobrze (duża klasa, wyraźne cechy)\n"
-        "   - Eco: dobrze rozpoznawany, sporadyczne pomyłki z Business\n"
-        "   - Eco Plus (PROBLEM): to tylko ~7% danych. MLP z class weights osiąga\n"
-        "     recall ~41% (łapie ok. 2/5 przypadków), ale RF bez balansowania\n"
-        "     praktycznie ignoruje tę klasę (recall ~1%).\n"
-        "   - Eco Plus najczęściej mylona z Eco (podobne parametry lotu i oceny)."
+        "\n4) CONFUSION-MATRIX INTERPRETATION:\n"
+        "   - Business: recognized very well (large class, distinct features)\n"
+        "   - Eco: recognized well, occasional confusion with Business\n"
+        "   - Eco Plus (PROBLEM): only ~7% of the data. The MLP with class weights reaches\n"
+        "     recall ~41% (catches about 2/5 of the cases), whereas RF without balancing\n"
+        "     practically ignores this class (recall ~1%).\n"
+        "   - Eco Plus is most often confused with Eco (similar flight parameters and scores)."
     )
 
     print(
-        "\n5) WPŁYW CLASS WEIGHTS:\n"
-        "   CrossEntropyLoss z wagami odwrotnie proporcjonalnymi do częstości klas\n"
-        "   wymusza na MLP zwracanie uwagi na Eco Plus. Bez tego mechanizmu\n"
-        "   sieć (jak RF) minimalizuje globalny błąd kosztem mniejszości."
+        "\n5) EFFECT OF CLASS WEIGHTS:\n"
+        "   CrossEntropyLoss with weights inversely proportional to class frequencies\n"
+        "   forces the MLP to pay attention to Eco Plus. Without this mechanism\n"
+        "   the network (like RF) minimizes the global error at the expense of the minority."
     )
 
     print(
-        "\n6) DLACZEGO F1-MACRO > ACCURACY:\n"
-        "   RF ma accuracy 86.4%, ale F1-macro tylko 60.6% — bo ignoruje Eco Plus.\n"
-        "   MLP tuned ma accuracy 78.3%, ale F1-macro 65.3% — lepiej balansuje klasy.\n"
-        "   Przy niezbalansowanych danych F1-macro jest rzetelniejszą metryką."
+        "\n6) WHY F1-MACRO > ACCURACY:\n"
+        "   RF has accuracy 86.4% but F1-macro only 60.6% — because it ignores Eco Plus.\n"
+        "   MLP tuned has accuracy 78.3% but F1-macro 65.3% — it balances the classes better.\n"
+        "   With imbalanced data, F1-macro is a more reliable metric."
     )
 
     print(
-        "\n7) OGRANICZENIA PROJEKTU:\n"
-        "   - Klasa Eco Plus jest bardzo mała (~7%) — trudna do poprawnej klasyfikacji\n"
-        "   - Brak zaawansowanej inżynierii cech (np. sumy ocen, ratia)\n"
-        "   - Grid search ograniczony do 18 konfiguracji (kompromis czasowy)\n"
-        "   - Dane ankietowe — subiektywne oceny, możliwe szumy\n"
-        "   - RF bez class_weight='balanced' — nierówne porównanie"
+        "\n7) PROJECT LIMITATIONS:\n"
+        "   - The Eco Plus class is very small (~7%) — hard to classify correctly\n"
+        "   - No advanced feature engineering (e.g. score sums, ratios)\n"
+        "   - Grid search limited to 18 configurations (a time trade-off)\n"
+        "   - Survey data — subjective ratings, possible noise\n"
+        "   - RF without class_weight='balanced' — an uneven comparison"
     )
 
     print("\n" + "=" * 80 + "\n")
@@ -346,14 +346,14 @@ def wypisz_wnioski(comparison: pd.DataFrame, best_grid_row: pd.Series) -> None:
 
 def uruchom_pelny_eksperyment() -> None:
     """
-    Uruchamia pełny eksperyment end-to-end:
-    1. Wczytanie i czyszczenie danych
-    2. Podział stratyfikowany (70/15/15)
-    3. Preprocessing (fit na train)
-    4. Grid search 18 konfiguracji MLP
-    5. Trening baseline + tuned + Random Forest
-    6. Ewaluacja na teście + zapis raportów i wykresów
-    7. Drukowanie wniosków
+    Runs the full end-to-end experiment:
+    1. Load and clean the data
+    2. Stratified split (70/15/15)
+    3. Preprocessing (fit on train)
+    4. Grid search over 18 MLP configurations
+    5. Train baseline + tuned + Random Forest
+    6. Evaluate on test + save reports and charts
+    7. Print conclusions
     """
     ustaw_seedy()
     device = wybierz_urzadzenie()
@@ -361,7 +361,7 @@ def uruchom_pelny_eksperyment() -> None:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    print("Ładowanie danych Airline Passenger Satisfaction...")
+    print("Loading the Airline Passenger Satisfaction data...")
     train_raw = pd.read_csv(TRAIN_PATH)
     test_raw = pd.read_csv(TEST_PATH)
     raw = pd.concat([train_raw, test_raw], ignore_index=True)
@@ -369,11 +369,11 @@ def uruchom_pelny_eksperyment() -> None:
     df = przygotuj_surowe_dane(raw)
     df = df.dropna(subset=[TARGET_COLUMN]).reset_index(drop=True)
 
-    print(f"Liczba rekordów po czyszczeniu: {len(df)}")
-    print("Rozkład klas:\n", df[TARGET_COLUMN].value_counts(normalize=True).round(4))
+    print(f"Number of records after cleaning: {len(df)}")
+    print("Class distribution:\n", df[TARGET_COLUMN].value_counts(normalize=True).round(4))
 
     train_df, val_df, test_df = podziel_dane_stratyfikowane(df)
-    print(f"Podział: train={len(train_df)}, val={len(val_df)}, test={len(test_df)}")
+    print(f"Split: train={len(train_df)}, val={len(val_df)}, test={len(test_df)}")
 
     artifacts = fit_preprocessor(train_df)
 
@@ -392,11 +392,11 @@ def uruchom_pelny_eksperyment() -> None:
     )
     class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
 
-    print(f"Urządzenie PyTorch: {device}")
-    print(f"Liczba cech po preprocessingu: {x_train.shape[1]}")
+    print(f"PyTorch device: {device}")
+    print(f"Number of features after preprocessing: {x_train.shape[1]}")
 
     grid = zbuduj_siatke()
-    print(f"Grid search: {len(grid)} konfiguracji")
+    print(f"Grid search: {len(grid)} configurations")
     grid_rows: list[dict[str, Any]] = []
     for i, config in enumerate(grid, start=1):
         print(f"[{i}/{len(grid)}] {config['name']}")
@@ -410,7 +410,7 @@ def uruchom_pelny_eksperyment() -> None:
     tuned_config = next(cfg for cfg in grid if cfg["name"] == best_row["name"])
     baseline_config = {**BASELINE_CONFIG}
 
-    print("Trening baseline MLP...")
+    print("Training baseline MLP...")
     baseline_model, baseline_history, _ = trenuj_mlp(
         baseline_config,
         x_train,
@@ -421,7 +421,7 @@ def uruchom_pelny_eksperyment() -> None:
         device,
     )
 
-    print("Trening tuned MLP...")
+    print("Training tuned MLP...")
     tuned_model, tuned_history, _ = trenuj_mlp(
         tuned_config,
         x_train,
@@ -432,7 +432,7 @@ def uruchom_pelny_eksperyment() -> None:
         device,
     )
 
-    print("Trening Random Forest...")
+    print("Training Random Forest...")
     rf_model = RandomForestClassifier(random_state=42, n_jobs=-1)
     rf_model.fit(x_train, y_train)
 
@@ -488,8 +488,8 @@ def uruchom_pelny_eksperyment() -> None:
     print("\n--- Classification report: random forest ---\n")
     print(reports["random_forest"])
 
-    print("Tabela porównawcza:")
+    print("Comparison table:")
     print(comparison.to_string(index=False))
 
     wypisz_wnioski(comparison, best_row)
-    print(f"Wyniki zapisane w: {RESULTS_DIR}")
+    print(f"Results saved in: {RESULTS_DIR}")

@@ -10,7 +10,7 @@ venv_ok() {
 }
 
 if ! venv_ok; then
-  echo "Tworzenie / naprawa środowiska .venv..."
+  echo "Creating / repairing the .venv environment..."
   rm -rf .venv
   "$PYTHON" -m venv .venv
 fi
@@ -19,7 +19,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip -q
 python -m pip install -r requirements.txt -q
 
-echo "=== 1/2: Airline Passenger Satisfaction — trening i ewaluacja ==="
+echo "=== 1/2: Airline Passenger Satisfaction — training and evaluation ==="
 python run_experiment.py
 
 echo
