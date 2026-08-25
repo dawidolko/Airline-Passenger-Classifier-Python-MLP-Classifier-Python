@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300" role="img" aria-label="Airline Passenger Satisfaction — MLP Pipeline">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker></defs>
+<rect width="900" height="300" rx="12" fill="#0d1117"/>
+<text x="24" y="34" fill="#e6edf3" font-size="16" font-weight="700" font-family="system-ui,-apple-system,Segoe UI,sans-serif">Airline Passenger Satisfaction — MLP Pipeline</text>
+
+<rect x="40" y="80" width="150" height="56" rx="8" fill="#161b22" stroke="#39c5cf" stroke-width="1.6"/><text x="115" y="102" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="system-ui,-apple-system,Segoe UI,sans-serif">Dataset</text>
+       <text x="115" y="121" text-anchor="middle" fill="#8b949e" font-size="11.5" font-family="system-ui,-apple-system,Segoe UI,sans-serif">passenger survey data</text>
+<line x1="190" y1="108" x2="236" y2="108" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="236" y="80" width="150" height="56" rx="8" fill="#161b22" stroke="#388bfd" stroke-width="1.6"/><text x="311" y="102" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="system-ui,-apple-system,Segoe UI,sans-serif">Preprocessing</text>
+       <text x="311" y="121" text-anchor="middle" fill="#8b949e" font-size="11.5" font-family="system-ui,-apple-system,Segoe UI,sans-serif">impute · encode · standardize</text>
+<line x1="386" y1="108" x2="432" y2="108" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="432" y="80" width="150" height="56" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/><text x="507" y="102" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="system-ui,-apple-system,Segoe UI,sans-serif">Pipeline</text>
+       <text x="507" y="121" text-anchor="middle" fill="#8b949e" font-size="11.5" font-family="system-ui,-apple-system,Segoe UI,sans-serif">scaling inside CV folds</text>
+<line x1="582" y1="108" x2="628" y2="108" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="628" y="80" width="232" height="56" rx="8" fill="#161b22" stroke="#d29922" stroke-width="1.6"/><text x="744" y="102" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="system-ui,-apple-system,Segoe UI,sans-serif">Models</text>
+       <text x="744" y="121" text-anchor="middle" fill="#8b949e" font-size="11.5" font-family="system-ui,-apple-system,Segoe UI,sans-serif">MLPClassifier · grid search</text>
+<line x1="744" y1="136" x2="744" y2="176" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="628" y="176" width="232" height="56" rx="8" fill="#161b22" stroke="#a371f7" stroke-width="1.6"/><text x="744" y="198" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="system-ui,-apple-system,Segoe UI,sans-serif">Evaluation</text>
+       <text x="744" y="217" text-anchor="middle" fill="#8b949e" font-size="11.5" font-family="system-ui,-apple-system,Segoe UI,sans-serif">confusion matrix · F1 · loss curves</text>
+<line x1="628" y1="204" x2="402" y2="204" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="160" y="176" width="242" height="56" rx="8" fill="#161b22" stroke="#db6d28" stroke-width="1.6"/><text x="281" y="198" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="system-ui,-apple-system,Segoe UI,sans-serif">Reports &amp; plots</text>
+       <text x="281" y="217" text-anchor="middle" fill="#8b949e" font-size="11.5" font-family="system-ui,-apple-system,Segoe UI,sans-serif">results/ · charts · tables</text>
+<line x1="160" y1="204" x2="114" y2="204" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="176" width="74" height="56" rx="8" fill="#161b22" stroke="#f85149" stroke-width="1.6"/><text x="77" y="198" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="system-ui,-apple-system,Segoe UI,sans-serif">App</text>
+       <text x="77" y="217" text-anchor="middle" fill="#8b949e" font-size="11.5" font-family="system-ui,-apple-system,Segoe UI,sans-serif">UI</text>
+</svg>
