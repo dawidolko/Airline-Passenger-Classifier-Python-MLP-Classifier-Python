@@ -11,6 +11,7 @@ The project is as much about method as about scores. Preprocessing is fitted on 
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-F7931E?logo=scikitlearn&logoColor=white)
 ![pandas](https://img.shields.io/badge/pandas-2.0%2B-150458?logo=pandas&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.28%2B-FF4B4B?logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
