@@ -354,8 +354,29 @@ Full per-configuration results are in `results/airline/grid_search_results.csv`.
 
 ### Prerequisites
 
+- **Docker** — for the containerised path below (recommended)
+
 - **Python 3.10+**
 - Both Kaggle CSVs present at `data/train.csv` and `data/test.csv`
+
+### Run with Docker (recommended)
+
+The container installs the scientific stack, runs the experiment and serves the
+dashboard in one step — no local Python setup and no virtual environment:
+
+```bash
+docker compose -f .tools/docker/docker-compose.yml up --build
+```
+
+The dashboard is then available at **http://localhost:8501**.
+
+Generated artefacts (`results/`, `data/`) are bind-mounted back to the host, so
+charts and metrics written inside the container survive it being removed. Stop
+the stack with:
+
+```bash
+docker compose -f .tools/docker/docker-compose.yml down
+```
 
 ### 1. Clone the Repository
 

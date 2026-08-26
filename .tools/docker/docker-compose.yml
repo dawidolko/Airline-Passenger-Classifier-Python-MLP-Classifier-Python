@@ -1,0 +1,23 @@
+# =============================================================================
+# airline — one-command run.
+#
+#   docker compose -f .tools/docker/docker-compose.yml up --build
+#
+# The dashboard is then served on http://localhost:8501.
+# =============================================================================
+
+name: airline
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: .tools/docker/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${APP_PORT:-8501}:8501'
+    volumes:
+      # Generated artefacts are bind-mounted back to the host so the charts and
+      # metrics written inside the container survive it being removed.
+      - ../../results:/app/results
+      - ../../data:/app/data
